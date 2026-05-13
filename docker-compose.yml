@@ -7,6 +7,8 @@ services:
   http-attacker:
     image: python:3.9-slim
     container_name: http-attacker
+    ports:
+    - "8888:8888" 
     volumes:
       - ./payload:/app
     working_dir: /app
@@ -17,7 +19,7 @@ services:
     # che ldap-attacker si avvii
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8888/Exploit.class')\""]
-      interval: 5s
+      interval: 3600s #check ogni ora
       timeout: 5s
       retries: 10
       start_period: 5s
@@ -31,6 +33,8 @@ services:
       context: .
       dockerfile: Dockerfile.ldap
     container_name: ldap-attacker
+    ports:
+    - "1389:1389" 
     # Attende che http-attacker sia healthy prima di partire
     depends_on:
       http-attacker:
