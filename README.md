@@ -1,5 +1,5 @@
 # Lab Log4Shell — CVE-2021-44228
-> Ambiente didattico per replicare la vulnerabilità Log4Shell
+> Ambiente didattico per replicare la vulnerabilità Log4Shell attraverso Minecraft per ottenere accesso a una reverse shell
 
 ---
 
