@@ -1,5 +1,4 @@
 services:
-
   # ─────────────────────────────────────────────────────────
   # 1. SERVER HTTP — serve Exploit.class al server LDAP
   #    Va avviato PRIMA del server LDAP (dipendenza)
@@ -7,8 +6,6 @@ services:
   http-attacker:
     image: python:3.9-slim
     container_name: http-attacker
-    ports:
-    - "8888:8888" 
     volumes:
       - ./payload:/app
     working_dir: /app
@@ -33,8 +30,6 @@ services:
       context: .
       dockerfile: Dockerfile.ldap
     container_name: ldap-attacker
-    ports:
-    - "1389:1389" 
     # Attende che http-attacker sia healthy prima di partire
     depends_on:
       http-attacker:
@@ -50,7 +45,7 @@ services:
 
   # ─────────────────────────────────────────────────────────
   # 3. SERVER MINECRAFT VITTIMA
-  #    - Versione 1.16.5 (Log4j 2.8.1 — vulnerabile)
+  #    - Versione 1.8.8 (Log4j 2.8.1 — vulnerabile)
   #    - Immagine PINNED a java8 pre-patch (dec 2021)
   #    - trustURLCodebase=true  → abilita il remote classloading
   #    - formatMsgNoLookups=false → assicura lookup abilitati
@@ -65,7 +60,7 @@ services:
       - "25565:25565"
     environment:
       EULA: "TRUE"
-      VERSION: "1.16.5"
+      VERSION: "1.8.8"
       ONLINE_MODE: "FALSE"
       # Forziamo entrambe le variabili per sicurezza:
       # JVM_OPTS  → opzioni aggiuntive al launcher
