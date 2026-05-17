@@ -45,7 +45,7 @@ services:
 
   # ─────────────────────────────────────────────────────────
   # 3. SERVER MINECRAFT VITTIMA
-  #    - Versione 1.8.8 (Log4j 2.8.1 — vulnerabile)
+  #    - Versione 1.8.8 (Log4j 2.14.1 — vulnerabile)
   #    - Immagine PINNED a java8 pre-patch (dec 2021)
   #    - trustURLCodebase=true  → abilita il remote classloading
   #    - formatMsgNoLookups=false → assicura lookup abilitati
