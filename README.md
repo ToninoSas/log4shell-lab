@@ -65,6 +65,11 @@ Listening on 0.0.0.0:1389
 ```bash
 nc -lvnp 9001
 ```
+- `nc` : netcat
+- `-l` : sono in ascolto
+- `-v` : verbose
+- `-n` : non risolvere il DNS, usa solo host numerici
+- `-p` : ti passo la porta
 
 ### 4. Connettiti al server Minecraft
 
